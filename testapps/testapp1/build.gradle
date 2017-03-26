@@ -1,0 +1,33 @@
+group 'net.plan99.gumball'
+version '1.0-SNAPSHOT'
+
+buildscript {
+    ext.kotlin_version = '1.1.1'
+
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'kotlin'
+
+sourceCompatibility = 1.5
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
+    compile "com.xenomachina:kotlin-argparser:1.1.0"
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+}
+
+task("printClasspath") {
+    println sourceSets.main.runtimeClasspath.asPath
+}

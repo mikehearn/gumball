@@ -1,0 +1,4 @@
+rootProject.name = 'gumball'
+include 'testapps:testapp1'
+findProject(':testapps:testapp1')?.name = 'testapp1'
+
