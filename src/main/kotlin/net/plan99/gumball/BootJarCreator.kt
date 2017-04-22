@@ -15,6 +15,7 @@ import java.util.zip.ZipEntry
 
 class BootJarCreator(private val paths: List<Path>, private val tmpdir: Path,
                      private val mainClass: String,
+                     private val platform: Platform,
                      private val eliminateDeadCode: Boolean,
                      private val lzmaCompress: Boolean) {
     private val log = Logger.getLogger(BootJarCreator::javaClass.name)
@@ -35,9 +36,9 @@ class BootJarCreator(private val paths: List<Path>, private val tmpdir: Path,
             createOptimisedBootJar(bootjar)
 
         val name = if (lzmaCompress) {
-            javaClass.getResourceAsStream("lzma-mac64").copyTo(tmpdir / "lzma")
+            val lzma = platform.extractFile(tmpdir, "lzma")
             val objName = "uber.jar.lzma"
-            run(tmpdir, tmpdir / "lzma", "encode", "uber.jar", objName)
+            run(tmpdir, lzma, "encode", "uber.jar", objName)
             objName
         } else {
             "uber.jar"
@@ -87,9 +88,8 @@ class BootJarCreator(private val paths: List<Path>, private val tmpdir: Path,
     }
 
     private fun binToObj(uberjarPath: Path, outputPath: Path) {
-        val binToObjPath = tmpdir / "binaryToObject"
         // TODO: Port to other platforms.
-        javaClass.getResourceAsStream("binaryToObject-mac64").copyTo(binToObjPath)
+        val binToObjPath = platform.extractFile(tmpdir, "bin-to-obj")
         run(tmpdir,
                 binToObjPath.toAbsolutePath(),
                 uberjarPath.toAbsolutePath(),

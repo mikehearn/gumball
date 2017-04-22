@@ -11,9 +11,22 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.attribute.PosixFilePermissions
 
+enum class Platform {
+    MAC64;
+
+    fun extractFile(to: Path, name: String): Path {
+        val path = to / name
+        stream(name).copyTo(path)
+        return path
+    }
+
+    fun stream(file: String): InputStream = javaClass.getResourceAsStream(name.toLowerCase() + "/$file")
+}
+
 class GumballMachine(val classpath: List<Path>,
                      val mainClassName: String,
                      val tmpdir: Path,
+                     val platform: Platform,
                      val eliminateDeadCode: Boolean,
                      val lzmaCompress: Boolean) {
     private val mainClassNameLenLimit = 256
@@ -29,9 +42,9 @@ class GumballMachine(val classpath: List<Path>,
     fun make(): InputStream {
         // Create the unified JAR that contains the standard library and app classes together.
         // In future we should separate app and boot jar for better compatibility with existing code.
-        val creator = BootJarCreator(classpath, tmpdir, mainClassName, eliminateDeadCode, lzmaCompress)
+        val creator = BootJarCreator(classpath, tmpdir, mainClassName, platform, eliminateDeadCode, lzmaCompress)
         // Generate the ELF file to link.
-        Files.newOutputStream("/tmp/uberjar.jar.o".asPath).use { creator.bootjarAsELF.copyTo(it) }
+        creator.bootjarAsELF.close()
         // Generate the bootstrap object file.
         generateBootstrap()
         // Link them all together.
@@ -45,7 +58,7 @@ class GumballMachine(val classpath: List<Path>,
         val injectedBytes = ((if (lzmaCompress) 'L' else ' ') + mainClassName).toByteArray().copyOf(mainClassName.length + 2)
         val editor = BinaryEditor('X'.toInt(), mainClassNameLenLimit, injectedBytes)
         val bootstrapObjPath = tmpdir / "bootstrap.o"
-        javaClass.getResourceAsStream("bootstrap-mac64.o").use { input ->
+        platform.stream("bootstrap.o").use { input ->
             BufferedOutputStream(Files.newOutputStream(bootstrapObjPath)).use { output ->
                 editor.edit(input, output)
             }
@@ -53,10 +66,7 @@ class GumballMachine(val classpath: List<Path>,
     }
 
     private fun linkObjects() {
-        val archive = "libavian-mac64.a"
-        javaClass.getResourceAsStream(archive).use { input ->
-            input.copyTo(tmpdir / archive)
-        }
+        val archive = platform.extractFile(tmpdir, "libavian.a")
         val cmd = "/usr/bin/g++ -rdynamic -Wl,-all_load $archive bootstrap.o uber.jar.o  -ldl -lpthread -lz -lobjc -o app -framework CoreFoundation -framework SystemConfiguration -framework Security -framework CoreServices -framework Cocoa"
         run(tmpdir, cmd)
         run(tmpdir, "/usr/bin/strip -S -x app")
@@ -80,7 +90,7 @@ fun main(args: Array<String>) {
         Args(ArgParser(args)).run {
             val tmpdir = Files.createTempDirectory("gumball")
             try {
-                GumballMachine(classpath, mainClass, tmpdir, true, lzma).make().copyTo(output)
+                GumballMachine(classpath, mainClass, tmpdir, Platform.MAC64, true, lzma).make().copyTo(output)
                 Files.setPosixFilePermissions(output, PosixFilePermissions.fromString("rwxr-x---"))
             } catch(e: UnsupportedOperationException) {
                 // Not on UNIX
