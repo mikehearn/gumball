@@ -13,15 +13,17 @@ fun InputStream.copyTo(path: Path) {
     use { newOutputStream(path).use { out -> it.copyTo(out) } }
 }
 
+class SubprocessFailed(name: String, retcode: Int) : Exception("Subprocess ${name} failed with error code $retcode")
+
 fun run(workingDir: Path, cmd: String) {
     run(workingDir, *cmd.split(' ').toTypedArray())
 }
 
 fun run(workingDir: Path, vararg args: Any) {
-    if ("windows" !in System.getProperty("os.name").toLowerCase()) {
+    if (isNotWindows) {
         val prog = args[0].toString().asPath
-        if (OWNER_EXECUTE !in getPosixFilePermissions(prog))
-            setPosixFilePermissions(prog, setOf(OWNER_EXECUTE, OWNER_WRITE, OWNER_READ))
+        if (OWNER_EXECUTE !in getPosixFilePermissions(workingDir / prog))
+            setPosixFilePermissions(workingDir / prog, setOf(OWNER_EXECUTE, OWNER_WRITE, OWNER_READ))
     }
     val retcode = ProcessBuilder(*args.map(Any::toString).toTypedArray())
             .directory(workingDir.toFile())
@@ -29,6 +31,8 @@ fun run(workingDir: Path, vararg args: Any) {
             .start()
             .waitFor()
     if (retcode != 0) {
-        throw BootJarCreator.SubprocessFailed(args[0].toString(), retcode)
+        throw SubprocessFailed(args[0].toString(), retcode)
     }
 }
+
+private val isNotWindows: Boolean get() = "windows" !in System.getProperty("os.name").toLowerCase()

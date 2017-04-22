@@ -7,7 +7,7 @@
 //
 // It should be compiled like this:
 //
-// g++ -I$JAVA_HOME/include -I$JAVA_HOME/include/linux -I$JAVA_HOME/include/darwin -c bootstrap.cpp -o bootstrap.o
+// g++ -I$JAVA_HOME/include -I$JAVA_HOME/include/linux -I$JAVA_HOME/include/darwin -c bootstrap.cpp -o ../resources/net/plan99/gumball/bootstrap-mac64.o
 
 #define D_JNI_IMPLEMENTATION_
 #include "stdint.h"
@@ -43,7 +43,7 @@ extern "C" {
 
 extern "C" void __cxa_pure_virtual(void) { abort(); }
 
-const char *main_class_name = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+const char *injected_data = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
 
 int main(int ac, const char** av)
 {
@@ -56,14 +56,18 @@ int main(int ac, const char** av)
   vmArgs.options = options;
 
   // TODO: Make the JVM options pre-calculated.
-  options[0].optionString = const_cast<char*>("-Xbootclasspath:[bootJar]");
+  if (injected_data[0] == 'L')
+    options[0].optionString = const_cast<char*>("-Xbootclasspath:[lzma.bootJar]");
+  else
+    options[0].optionString = const_cast<char*>("-Xbootclasspath:[bootJar]");
 
   JavaVM* vm;
   void* env;
   JNI_CreateJavaVM(&vm, &env, &vmArgs);
   JNIEnv* e = static_cast<JNIEnv*>(env);
 
-  jclass c = e->FindClass(main_class_name);
+  const char *classname = &injected_data[1];
+  jclass c = e->FindClass(classname);
   if (not e->ExceptionCheck()) {
     jmethodID m = e->GetStaticMethodID(c, "main", "([Ljava/lang/String;)V");
     if (not e->ExceptionCheck()) {
