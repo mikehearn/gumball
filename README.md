@@ -1,3 +1,16 @@
+TODO
+====
+
+* Gradle plugin
+* AOT compilation
+* Windows
+* Linux
+* Test with more apps
+* SWT
+* JNA?
+* Investigate why LZMA is not a bigger win
+* Documentation, website, announcement
+
 Making the included binaries
 ============================
 
