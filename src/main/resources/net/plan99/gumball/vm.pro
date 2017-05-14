@@ -2,9 +2,12 @@
 
 # we call the values method reflectively in Enum.valueOf():
 
--keepclassmembers public class * extends java.lang.Enum {
-   public static *** values();
- }
+# Enums have methods and members that are called reflectively in both Avian and OpenJDK.
+-keepclassmembers enum * {
+    **[] $VALUES;
+    public *;
+    public static **[] values();
+}
 
 # the VM depends on the fixed layout of the following classes:
 

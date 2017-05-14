@@ -49,7 +49,7 @@ int main(int ac, const char** av)
 {
   JavaVMInitArgs vmArgs;
   vmArgs.version = JNI_VERSION_1_2;
-  vmArgs.nOptions = 1;
+  vmArgs.nOptions = 4;
   vmArgs.ignoreUnrecognized = JNI_TRUE;
 
   JavaVMOption options[vmArgs.nOptions];
@@ -60,6 +60,15 @@ int main(int ac, const char** av)
     options[0].optionString = const_cast<char*>("-Xbootclasspath:[lzma.bootJar]");
   else
     options[0].optionString = const_cast<char*>("-Xbootclasspath:[bootJar]");
+
+  // Force the user country to USA for now. Non en_US locales require big locale tables which bloat the binary.
+  // In future we may add a flag to create larger binaries if you want i18n data tables. It's probably OK to
+  // force en_US though, because many command line tools won't care about internationalisation.
+  options[1].optionString = const_cast<char*>("-Duser.country=US");
+
+  // 1gb max heap size, 4mb stack size.
+  options[2].optionString = const_cast<char*>("-Xmx1024M");
+  options[3].optionString = const_cast<char*>("-Xss4M");
 
   JavaVM* vm;
   void* env;

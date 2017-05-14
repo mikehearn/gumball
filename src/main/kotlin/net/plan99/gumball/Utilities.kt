@@ -1,6 +1,7 @@
 package net.plan99.gumball
 
 import java.io.InputStream
+import java.lang.StringBuilder
 import java.nio.file.Files.*
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -36,3 +37,16 @@ fun run(workingDir: Path, vararg args: Any) {
 }
 
 private val isNotWindows: Boolean get() = "windows" !in System.getProperty("os.name").toLowerCase()
+
+private fun codePointsString(vararg codePoints: Int): String {
+    val builder = StringBuilder()
+    codePoints.forEach { builder.append(Character.toChars(it)) }
+    return builder.toString()
+}
+
+// Unfortunately only Apple has a terminal that can do colour emoji AND an emoji font installed by default.
+val hasEmojiTerminal by lazy {
+    System.getenv("CORDA_FORCE_EMOJI") != null || System.getenv("TERM_PROGRAM") in listOf("Apple_Terminal", "iTerm.app")
+}
+
+val CODE_RIGHT_ARROW: String = codePointsString(0x27A1, 0xFE0F)

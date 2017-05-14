@@ -230,10 +230,6 @@
    boolean isSupported(java.lang.String);
  }
 
-# Charsets are loaded via reflection.  If you need others besides
-# UTF-8, you'll need to add them (e.g. sun.nio.cs.ISO_8859_1).
--keep class sun.nio.cs.UTF_8
-
 # loaded reflectively to handle embedded resources:
 -keep class avian.avianvmresource.Handler
 
@@ -259,6 +255,7 @@
 # loaded via reflection from DefaultFileSystemProvider:
 -keep class sun.nio.fs.LinuxFileSystemProvider
 -keep class sun.nio.fs.BsdFileSystemProvider
+-keep class sun.nio.fs.MacOSXFileSystemProvider
 
 # loaded via JNI in UnixNativeDispatcher.c:
 -keep class sun.nio.fs.UnixFileAttributes {
@@ -311,4 +308,21 @@
 -keepclassmembers class java.util.concurrent.SynchronousQueue$TransferStack$SNode {
 	*** match;
 	*** next;
+}
+
+# Needed to create temporary file paths, amongst other things.
+-keep class sun.security.provider.NativePRNG
+-keep class sun.security.provider.SHA
+
+# Character set codecs
+-keep class sun.nio.cs.ISO_8859_1
+-keep class sun.nio.cs.UTF_8
+-keep class sun.nio.cs.UTF_16
+-keep class sun.nio.cs.UTF_16BE
+-keep class sun.nio.cs.UTF_16LE
+-keep class sun.nio.cs.US_ASCII
+
+# Accessed from native code
+-keep class java.util.zip.Deflater {
+    <fields>;
 }

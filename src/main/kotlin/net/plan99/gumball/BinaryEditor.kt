@@ -10,8 +10,6 @@ class BinaryEditor(private val needleByte: Int, private val repeatCount: Int, pr
      * to ensure the file doesn't change size (no internal file offsets are altered).
      */
     fun edit(inputStream: InputStream, outputStream: OutputStream) {
-        require(inputStream.markSupported()) { "InputStream must support marking" }
-
         while (true) {
             val b = inputStream.read()
             if (b == -1) {
